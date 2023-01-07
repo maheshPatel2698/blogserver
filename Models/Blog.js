@@ -49,7 +49,7 @@ const blogSchema = new mongoose.Schema({
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'User'
             },
-            like: {
+            dislike: {
                 type: Number,
                 default: 0
             }

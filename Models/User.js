@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema({
                 ref: 'Blog'
             }
         }
+    ],
+    savedBlogs: [
+        {
+            blogId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Blog'
+            }
+        }
     ]
 
 })

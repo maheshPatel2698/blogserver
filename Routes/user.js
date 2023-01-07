@@ -1,11 +1,16 @@
 const express = require('express')
 const userRouter = express.Router()
 const cloudinary = require('cloudinary')
+
 const encPassword = require('../Utils/encPassword')
 const validatePassword = require('../Utils/validatePassword')
 const cookietoken = require('../Utils/cookieToken')
+
 const User = require('../Models/User')
+const Blog = require('../Models/Blog')
+
 const isUser = require('../Middleware/isUser')
+
 
 // signup route
 userRouter.post('/signup', async (req, res) => {
@@ -159,6 +164,190 @@ userRouter.put('/update', isUser, async (req, res) => {
     }
 })
 
+// liked blogs
+userRouter.put('/likeblog/:blogid', isUser, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const isAlreadyLiked = blog.likes.filter((b) => {
+            return b.user.toString() === req.id
+        })
+        if (isAlreadyLiked) {
+            return res.status(405).json({
+                success: false,
+                message: 'Already liked'
+            })
+        }
+        blog.likes.push({
+            user: req.id,
+            like: 1
+        })
+        await blog.save()
 
+
+        res.status(200).json({
+            success: true,
+            message: 'You Liked Blogs'
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Interal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
+
+// dislikepost
+userRouter.put('/dislikeblog/:blogid', isUser, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const isAlreadydisLiked = blog.dislikes.filter((b) => {
+            return b.user.toString() === req.id
+        })
+        if (isAlreadydisLiked) {
+            return res.status(405).json({
+                success: false,
+                message: 'Already disliked'
+            })
+        }
+        blog.dislikes.push({
+            user: req.id,
+            dislike: 1
+        })
+        await blog.save()
+
+        res.status(200).json({
+            success: true,
+            message: 'You disliked Blogs'
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Interal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
+
+// addcommennt
+userRouter.put('/addcomment/:blogid', isUser, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const isAlreadyCommented = blog.comments.filter((c) => {
+            return c.user.toString() === req.id
+        })
+
+        if (isAlreadyCommented) {
+            return res.status(405).json({
+                success: false,
+                message: "Already Commented"
+            })
+        }
+        blog.comments.push({
+            user: req.id,
+            comment: req.body.comment
+        })
+        await blog.save()
+
+        res.status(200).json({
+            success: true,
+            message: 'You commented on Blog',
+            comment: req.body.comment
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server',
+            error: error.message
+        })
+    }
+})
+
+// updateComment
+userRouter.put('/updatecomment/:blogid', isUser, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const userComment = blog.comments.filter((uc) => {
+            return uc.user.toString() === req.id
+        })
+        if (userComment) {
+            userComment[0].comment = req.body.comment
+        }
+        await blog.save()
+        res.status(200).json({
+            success: true,
+            message: 'Comment Updated',
+            comment: req.body.comment
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Interal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
+
+// deleteComment
+userRouter.put('/deletecomment/:blogid', isUser, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const userComment = blog.comments.filter((uc) => {
+            return uc.user.toString() === req.id
+        })
+
+        const updatedComment = userComment.filter((uc) => {
+            uc.user.toString !== req.id
+        })
+        blog.comments = updatedComment
+        await blog.save()
+
+        res.status(200).json({
+            success: true,
+            message: 'Comment Deleted'
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            success: true,
+            message: 'Internal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
 
 module.exports = userRouter

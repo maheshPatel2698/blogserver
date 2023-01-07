@@ -118,4 +118,47 @@ userRouter.get('/profile', isUser, async (req, res) => {
     }
 })
 
+
+// updateUser
+userRouter.put('/update', isUser, async (req, res) => {
+    try {
+        let photo = {}
+        const user = await User.findById(req.id)
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'No user found'
+            })
+        }
+        if (req.files) {
+            await cloudinary.v2.uploader.destroy(user.photo?.secure_id)
+            const result = await cloudinary.v2.uploader.upload(req.files.photo.tempFilePath, {
+                folder: 'Bloguser'
+            })
+            photo.secure_id = result.public_id
+            photo.secure_url = result.secure_url
+        }
+        req.body.photo = photo
+
+        const updateUser = await User.findById(req.id, req.body, {
+            new: true,
+            runValidators: true
+        })
+        res.status(200).json({
+            success: true,
+            updateUser
+        })
+
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message
+        })
+    }
+})
+
+
+
 module.exports = userRouter

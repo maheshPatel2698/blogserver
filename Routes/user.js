@@ -350,4 +350,80 @@ userRouter.put('/deletecomment/:blogid', isUser, async (req, res) => {
     }
 })
 
+// saveblog
+userRouter.put('/saveblog/:blogid', isUser, async (req, res) => {
+
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+
+
+
+        const user = await User.findById(req.id)
+        const savedBlogs = user.savedBlogs.filter((sb) => {
+            return sb.blogId === req.params.blogid
+        })
+
+        if (savedBlogs) {
+            return res.status(405).json({
+                success: false,
+                message: "Already Saved"
+            })
+        }
+        user.savedBlogs.push({
+            blogId: req.params.blogid
+        })
+        await user.save()
+        res.status(200).json({
+            success: true,
+            message: "Saved Blog SuccessFully!"
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
+
+userRouter.put('/removesavedblog/:blogid', isUser, async (req, res) => {
+
+    try {
+        const blog = await Blog.findById(req.params.blogid)
+        if (!blog) {
+            return res.status(404).json({
+                success: false,
+                message: 'No blog found'
+            })
+        }
+        const user = await User.findById(req.id)
+
+        const updatedSavedBlogs = user.savedBlogs.filter((sb) => {
+            return sb.blogId.toString() !== req.params.blogid
+        })
+        console.log(updatedSavedBlogs)
+        user.savedBlogs = updatedSavedBlogs
+        await user.save()
+
+        res.status(200).json({
+            success: true,
+            message: "Saved Blog SuccessFully!"
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Internal Server Error',
+            error: error.message
+        })
+        console.log(error)
+    }
+})
+
 module.exports = userRouter
